@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Login Callback</title>
+</head>
+<body>
+    <script>
+        // Get the authorization code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        
+        if (error) {
+            // Handle error
+            window.location.href = `myapp://spotify/error?error=${error}`;
+        } else if (code) {
+            // Success - redirect back to app with code
+            window.location.href = `myapp://spotify/callback?code=${code}`;
+        } else {
+            // No code or error
+            window.location.href = `myapp://spotify/error?error=no_code`;
+        }
+    </script>
+</body>
+</html>
