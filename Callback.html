@@ -33,7 +33,7 @@
             console.log('Spotify auth error:', error);
             // Try to redirect back to app with error
             try {
-                window.location.href = `musicapp://spotify/error?error=${error}`;
+                window.location.href = `gamepractice://callback?error=${error}`;
             } catch (e) {
                 // Fallback - show error message
                 document.body.innerHTML = `
@@ -48,7 +48,7 @@
             console.log('Spotify auth code received:', code.substring(0, 20) + '...');
             // Success - redirect back to app with code
             try {
-                window.location.href = `musicapp://spotify/callback?code=${code}`;
+                window.location.href = `gamepractice://callback?code=${code}`;
             } catch (e) {
                 // Fallback - show success message with code
                 document.body.innerHTML = `
@@ -70,7 +70,7 @@
             console.log('No code or error received');
             // No code or error
             try {
-                window.location.href = `musicapp://spotify/error?error=no_code`;
+                window.location.href = `gamepractice://callback?error=no_code`;
             } catch (e) {
                 document.body.innerHTML = `
                     <div style="color: orange;">
