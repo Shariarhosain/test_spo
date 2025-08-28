@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Login Callback</title>
-    <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotify Login Callback</title>
+<style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
@@ -15,81 +15,114 @@
         .loading {
             font-size: 18px;
         }
-    </style>
+</style>
 </head>
 <body>
-    <div class="loading">
-        <h2>🎵 Spotify Login Successful!</h2>
-        <p>Redirecting back to your app...</p>
-    </div>
-
+<div class="loading">
+<h2>🎵 Spotify Login Successful!</h2>
+<p>Redirecting back to your app...</p>
+</div>
+ 
     <script>
-        // Get the authorization code from URL
+        // Extract access token from URL fragment (for implicit grant flow)
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const error = params.get('error');
+        // Also check URL query parameters (for authorization code flow)
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
-        const error = urlParams.get('error');
-        
-        if (error) {
-            console.log('Spotify auth error:', error);
+        const queryError = urlParams.get('error');
+        console.log('Hash params:', hash);
+        console.log('Access token:', accessToken);
+        console.log('Code:', code);
+        console.log('Error:', error || queryError);
+        if (error || queryError) {
+            const errorMsg = error || queryError;
+            console.log('Spotify auth error:', errorMsg);
             // Try to redirect back to app with error
             try {
-                window.location.href = `gamepractice://callback?error=${error}`;
+                window.location.href = `gamepractice://callback?error=${errorMsg}`;
             } catch (e) {
                 // Fallback - show error message
                 document.body.innerHTML = `
-                    <div style="color: red;">
-                        <h2>❌ Authentication Error</h2>
-                        <p>Error: ${error}</p>
-                        <p>Please close this window and try again.</p>
-                    </div>
+<div style="color: red;">
+<h2>❌ Authentication Error</h2>
+<p>Error: ${errorMsg}</p>
+<p>Please close this window and try again.</p>
+</div>
+                `;
+            }
+        } else if (accessToken) {
+            console.log('Access token received:', accessToken.substring(0, 20) + '...');
+            // Success with access token - redirect back to app
+            try {
+                window.location.href = `gamepractice://callback?access_token=${accessToken}`;
+            } catch (e) {
+                // Fallback - show success message
+                document.body.innerHTML = `
+<div style="color: green;">
+<h2>✅ Authentication Successful!</h2>
+<p>Access token received.</p>
+<p>Please close this window and return to your app.</p>
+<button onclick="copyToken()">Copy Token</button>
+<script>
+                            function copyToken() {
+                                navigator.clipboard.writeText('${accessToken}');
+                                alert('Token copied to clipboard!');
+                            }
+</script>
+</div>
                 `;
             }
         } else if (code) {
-            console.log('Spotify auth code received:', code.substring(0, 20) + '...');
-            // Success - redirect back to app with code
+            console.log('Authorization code received:', code.substring(0, 20) + '...');
+            // Success with authorization code - redirect back to app
             try {
                 window.location.href = `gamepractice://callback?code=${code}`;
             } catch (e) {
                 // Fallback - show success message with code
                 document.body.innerHTML = `
-                    <div style="color: green;">
-                        <h2>✅ Authentication Successful!</h2>
-                        <p>Authorization code received.</p>
-                        <p>Please close this window and return to your app.</p>
-                        <button onclick="copyCode()">Copy Code</button>
-                        <script>
+<div style="color: green;">
+<h2>✅ Authentication Successful!</h2>
+<p>Authorization code received.</p>
+<p>Please close this window and return to your app.</p>
+<button onclick="copyCode()">Copy Code</button>
+<script>
                             function copyCode() {
                                 navigator.clipboard.writeText('${code}');
                                 alert('Code copied to clipboard!');
                             }
-                        </script>
-                    </div>
+</script>
+</div>
                 `;
             }
         } else {
-            console.log('No code or error received');
-            // No code or error
+            console.log('No token, code, or error received');
+            console.log('Full URL:', window.location.href);
+            // No token, code, or error
             try {
-                window.location.href = `gamepractice://callback?error=no_code`;
+                window.location.href = `gamepractice://callback?error=no_token`;
             } catch (e) {
                 document.body.innerHTML = `
-                    <div style="color: orange;">
-                        <h2>⚠️ No Authorization Code</h2>
-                        <p>No authorization code was received.</p>
-                        <p>Please close this window and try again.</p>
-                    </div>
+<div style="color: orange;">
+<h2>⚠️ No Authorization Data</h2>
+<p>No access token or authorization code was received.</p>
+<p>URL: ${window.location.href}</p>
+<p>Please close this window and try again.</p>
+</div>
                 `;
             }
         }
-
-        // Auto-close window after 5 seconds if redirect fails
+ 
+        // Auto-close window after 8 seconds if redirect fails
         setTimeout(() => {
             try {
                 window.close();
             } catch (e) {
                 console.log('Cannot close window automatically');
             }
-        }, 5000);
-    </script>
+        }, 8000);
+</script>
 </body>
 </html>
