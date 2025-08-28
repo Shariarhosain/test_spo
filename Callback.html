@@ -15,114 +15,121 @@
         .loading {
             font-size: 18px;
         }
+        .debug {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: left;
+        }
 </style>
 </head>
 <body>
 <div class="loading">
-<h2>🎵 Spotify Login Successful!</h2>
-<p>Redirecting back to your app...</p>
+<h2>🎵 Spotify Login Callback</h2>
+<p id="status">Processing authentication...</p>
 </div>
  
+    <div id="debug" class="debug"></div>
+ 
     <script>
+        const debugDiv = document.getElementById('debug');
+        const statusP = document.getElementById('status');
+        function log(message) {
+            console.log(message);
+            debugDiv.innerHTML += `<div>${message}</div>`;
+        }
+ 
+        function updateStatus(message) {
+            statusP.textContent = message;
+            log(`Status: ${message}`);
+        }
+ 
         // Extract access token from URL fragment (for implicit grant flow)
         const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
-        const error = params.get('error');
+        const hashParams = new URLSearchParams(hash);
+        const accessToken = hashParams.get('access_token');
+        const hashError = hashParams.get('error');
         // Also check URL query parameters (for authorization code flow)
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const queryError = urlParams.get('error');
-        console.log('Hash params:', hash);
-        console.log('Access token:', accessToken);
-        console.log('Code:', code);
-        console.log('Error:', error || queryError);
-        if (error || queryError) {
-            const errorMsg = error || queryError;
-            console.log('Spotify auth error:', errorMsg);
+        log('Full URL: ' + window.location.href);
+        log('Hash: ' + hash);
+        log('Access token: ' + (accessToken ? accessToken.substring(0, 20) + '...' : 'Not found'));
+        log('Auth code: ' + (code ? code.substring(0, 20) + '...' : 'Not found'));
+        log('Error: ' + (hashError || queryError || 'None'));
+        const error = hashError || queryError;
+        if (error) {
+            updateStatus('❌ Authentication Error');
+            log('Spotify auth error: ' + error);
             // Try to redirect back to app with error
-            try {
-                window.location.href = `gamepractice://callback?error=${errorMsg}`;
-            } catch (e) {
-                // Fallback - show error message
-                document.body.innerHTML = `
-<div style="color: red;">
-<h2>❌ Authentication Error</h2>
-<p>Error: ${errorMsg}</p>
-<p>Please close this window and try again.</p>
-</div>
-                `;
-            }
+            setTimeout(() => {
+                try {
+                    const appUrl = `gamepractice://callback?error=${encodeURIComponent(error)}`;
+                    log('Redirecting to: ' + appUrl);
+                    window.location.href = appUrl;
+                } catch (e) {
+                    log('Error redirecting: ' + e.message);
+                    updateStatus('Please close this window and try again');
+                }
+            }, 2000);
         } else if (accessToken) {
-            console.log('Access token received:', accessToken.substring(0, 20) + '...');
+            updateStatus('✅ Access Token Received!');
+            log('Access token received: ' + accessToken.substring(0, 30) + '...');
             // Success with access token - redirect back to app
-            try {
-                window.location.href = `gamepractice://callback?access_token=${accessToken}`;
-            } catch (e) {
-                // Fallback - show success message
-                document.body.innerHTML = `
-<div style="color: green;">
-<h2>✅ Authentication Successful!</h2>
-<p>Access token received.</p>
-<p>Please close this window and return to your app.</p>
-<button onclick="copyToken()">Copy Token</button>
-<script>
-                            function copyToken() {
-                                navigator.clipboard.writeText('${accessToken}');
-                                alert('Token copied to clipboard!');
-                            }
-</script>
-</div>
-                `;
-            }
+            setTimeout(() => {
+                try {
+                    const appUrl = `gamepractice://callback?access_token=${encodeURIComponent(accessToken)}`;
+                    log('Redirecting to: ' + appUrl);
+                    window.location.href = appUrl;
+                } catch (e) {
+                    log('Error redirecting: ' + e.message);
+                    updateStatus('Token received, but couldn\'t redirect to app');
+                }
+            }, 2000);
         } else if (code) {
-            console.log('Authorization code received:', code.substring(0, 20) + '...');
+            updateStatus('✅ Authorization Code Received!');
+            log('Authorization code received: ' + code.substring(0, 30) + '...');
             // Success with authorization code - redirect back to app
-            try {
-                window.location.href = `gamepractice://callback?code=${code}`;
-            } catch (e) {
-                // Fallback - show success message with code
-                document.body.innerHTML = `
-<div style="color: green;">
-<h2>✅ Authentication Successful!</h2>
-<p>Authorization code received.</p>
-<p>Please close this window and return to your app.</p>
-<button onclick="copyCode()">Copy Code</button>
-<script>
-                            function copyCode() {
-                                navigator.clipboard.writeText('${code}');
-                                alert('Code copied to clipboard!');
-                            }
-</script>
-</div>
-                `;
-            }
+            setTimeout(() => {
+                try {
+                    const appUrl = `gamepractice://callback?code=${encodeURIComponent(code)}`;
+                    log('Redirecting to: ' + appUrl);
+                    window.location.href = appUrl;
+                } catch (e) {
+                    log('Error redirecting: ' + e.message);
+                    updateStatus('Code received, but couldn\'t redirect to app');
+                }
+            }, 2000);
         } else {
-            console.log('No token, code, or error received');
-            console.log('Full URL:', window.location.href);
+            updateStatus('⚠️ No Authorization Data');
+            log('No token, code, or error received');
             // No token, code, or error
-            try {
-                window.location.href = `gamepractice://callback?error=no_token`;
-            } catch (e) {
-                document.body.innerHTML = `
-<div style="color: orange;">
-<h2>⚠️ No Authorization Data</h2>
-<p>No access token or authorization code was received.</p>
-<p>URL: ${window.location.href}</p>
-<p>Please close this window and try again.</p>
-</div>
-                `;
-            }
+            setTimeout(() => {
+                try {
+                    const appUrl = `gamepractice://callback?error=no_token`;
+                    log('Redirecting to: ' + appUrl);
+                    window.location.href = appUrl;
+                } catch (e) {
+                    log('Error redirecting: ' + e.message);
+                    updateStatus('No data received. Please close and try again.');
+                }
+            }, 3000);
         }
  
-        // Auto-close window after 8 seconds if redirect fails
+        // Auto-close window after 10 seconds if redirect fails
         setTimeout(() => {
             try {
+                log('Attempting to close window...');
                 window.close();
             } catch (e) {
-                console.log('Cannot close window automatically');
+                log('Cannot close window automatically: ' + e.message);
+                updateStatus('Please close this window manually');
             }
-        }, 8000);
+        }, 10000);
 </script>
 </body>
 </html>
